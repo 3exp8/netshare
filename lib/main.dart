@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:netshare/config/styles.dart';
+import 'package:netshare/data/preload_data.dart';
 import 'package:netshare/di/di.dart';
 import 'package:netshare/plugin_management/plugins.dart';
+import 'package:netshare/provider/app_provider.dart';
+import 'package:netshare/provider/chat_provider.dart';
 import 'package:netshare/provider/connection_provider.dart';
-import 'package:netshare/provider/db_provider.dart';
 import 'package:netshare/provider/file_provider.dart';
+import 'package:netshare/ui/chat/chat_widget.dart';
 import 'package:netshare/ui/client/scan_qr_widget.dart';
-import 'package:netshare/ui/navigation_widget.dart';
 import 'package:netshare/ui/client/client_widget.dart';
-import 'package:netshare/ui/receive/receive_widget.dart';
 import 'package:netshare/ui/send/send_widget.dart';
 import 'package:netshare/ui/server/server_widget.dart';
 import 'package:netshare/util/utility_functions.dart';
@@ -22,6 +23,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initPlugins();
   setupDI();
+  await PreloadData.inject();
   runApp(MyApp());
 }
 
@@ -41,11 +43,6 @@ class MyApp extends StatelessWidget {
               return '/$mServerPath';
             }
           },
-      ),
-      GoRoute(
-        name: mNavigationPath,
-        path: '/$mNavigationPath',
-        builder: (context, state) => const NavigationWidget(),
       ),
       GoRoute(
         name: mServerPath,
@@ -70,9 +67,9 @@ class MyApp extends StatelessWidget {
               ],
             ),
             GoRoute(
-              name: mReceivePath,
-              path: mReceivePath,
-              builder: (BuildContext context, GoRouterState state) => const ReceiveWidget(),
+              name: mChatPath,
+              path: mChatPath,
+              builder: (BuildContext context, GoRouterState state) => const ChatWidget(),
             ),
             GoRoute(
               name: mScanningPath,
@@ -89,8 +86,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => FileProvider()),
-        ChangeNotifierProvider(create: (context) => DatabaseProvider()),
         ChangeNotifierProvider(create: (context) => ConnectionProvider()),
+        ChangeNotifierProvider(create: (context) => ChatProvider()),
+        ChangeNotifierProvider(create: (context) => AppProvider()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
@@ -99,6 +97,11 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           appBarTheme: const AppBarTheme(color: backgroundColor),
           colorScheme: ColorScheme.fromSeed(seedColor: seedColor, background: backgroundColor),
+          iconButtonTheme: const IconButtonThemeData(
+            style: ButtonStyle(
+              iconColor: MaterialStatePropertyAll<Color>(textIconButtonColor),
+            ),
+          ),
         ),
         routerConfig: _router,
       ),
